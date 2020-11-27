@@ -3,7 +3,13 @@ const ctx = canvas.getContext("2d");
 const button = document.getElementById("button");
 let dots = new Array();
 let mouse = {x: 0, y: 0, move: false};
-let animate = {play: false, progress: 0};
+let animate = {play: false, progress: 0, time: 200, replay: false};
+let centerLine = false;
+let centerLineDots = new Array();
+let vMainLine = true;
+let vMainDots = true;
+let vSubLine = true;
+let vSubDots = true;
 
 function init() {
   canvas.width = window.innerWidth;
@@ -16,9 +22,10 @@ function init() {
 
 function drawing() {
   if(animate.play) animate.progress++;
-  if(animate.progress >= 200) {
-    animate.play = false;
+  if(animate.progress >= animate.time) {
+    if(!animate.replay) animate.play = false;
     animate.progress = 0;
+    centerLineDots.push({x: dots[dots.length - 1].x, y: dots[dots.length - 1].y});
   }
   canvas.width = canvas.width;
   ctx.fillStyle = "#222";
@@ -31,11 +38,11 @@ function drawing() {
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(i.x, i.y, 7, 0, Math.PI * 2);
-    ctx.stroke();
+    if(vMainDots) ctx.stroke();
     if(dots.length > 1) {
       ctx.beginPath();
       ctx.arc(i.x, i.y, 4, 0, Math.PI * 2);
-      ctx.fill();
+      if(vMainDots) ctx.fill();
     }
   })
   ctx.beginPath();
@@ -47,9 +54,10 @@ function drawing() {
       ctx.lineTo(dot.x, dot.y);
     }
   })
-  ctx.stroke();
+  if(vMainLine) ctx.stroke();
   ctx.beginPath();
   if(animate.progress > 0) {
+    if(animate.play && animate.progress === 1) centerLineDots = [{x:dots[0].x, y:dots[0].y}];
     ctx.fillStyle = "#2228";
     ctx.strokeStyle = "#555";
     let subDots = new Array();
@@ -60,18 +68,20 @@ function drawing() {
       subDots.forEach((l, idx) => {
         if(idx < subDots.length - 1) {
           let dot = subDots[idx + 1];
-          let x = l.x - ((l.x - dot.x) / 200 * animate.progress);
-          let y = l.y - ((l.y - dot.y) / 200 * animate.progress);
+          let x = l.x - ((l.x - dot.x) / animate.time * animate.progress);
+          let y = l.y - ((l.y - dot.y) / animate.time * animate.progress);
           nowDots.push({x: x, y: y});
           ctx.beginPath();
           if(subDots.length > 2) {
             ctx.arc(x, y, 3, 0, Math.PI * 2);
           }else {
             ctx.arc(x, y, 7, 0, Math.PI * 2);
+            centerLineDots.push({x: x, y: y});
           }
-          ctx.fill();
+          if(vSubDots) ctx.fill();
         }
       })
+      ctx.beginPath();
       nowDots.forEach((l, idx) => {
         if(idx < nowDots.length - 1) {
           let dot = nowDots[idx + 1];
@@ -79,10 +89,21 @@ function drawing() {
           ctx.moveTo(l.x, l.y);
           ctx.lineTo(dot.x, dot.y);
         }
-        ctx.stroke();
+        if(vSubLine) ctx.stroke();
       })
       subDots = nowDots;
     }
+  }
+  ctx.beginPath();
+  if(centerLine) {
+    centerLineDots.forEach((i, idx) => {
+      if(idx === 0) {
+        ctx.moveTo(i.x, i.y);
+      }else {
+        ctx.lineTo(i.x, i.y);
+      }
+    })
+    ctx.stroke();
   }
   ctx.beginPath();
   mouse.move = false;
@@ -135,6 +156,35 @@ function eventListener() {
     if(e.key === " ") {
       if(animate.play) animate.play = false;
       else animate.play = true;
+    }
+    if(e.keyCode < 90) {
+      if(e.key === "1") {
+        if(vMainDots) vMainDots = false;
+        else vMainDots = true;
+      }
+      if(e.key === "2") {
+        if(vMainLine) vMainLine = false;
+        else vMainLine = true;
+      }
+      if(e.key === "3") {
+        if(vSubDots) vSubDots = false;
+        else vSubDots = true;
+      }
+      if(e.key === "4") {
+        if(vSubLine) vSubLine = false;
+        else vSubLine = true;
+      }
+      if(e.key === "5") {
+        if(centerLine) centerLine = false;
+        else centerLine = true;
+      }
+    }
+    if(96 < e.keyCode && e.keyCode < 106) {
+      animate.time = Number(e.key) * 50;
+    }
+    if(e.key.toLowerCase() === "r") {
+      if(animate.replay) animate.replay = false;
+      else animate.replay = true;
     }
   })
   button.addEventListener("click", e => {
