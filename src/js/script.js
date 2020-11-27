@@ -10,6 +10,8 @@ let vMainLine = true;
 let vMainDots = true;
 let vSubLine = true;
 let vSubDots = true;
+let ctrl = false;
+let shift = false;
 
 function init() {
   canvas.width = window.innerWidth;
@@ -56,15 +58,14 @@ function drawing() {
   })
   if(vMainLine) ctx.stroke();
   ctx.beginPath();
-  if(animate.progress > 0) {
+  ctx.fillStyle = "#2228";
+  ctx.strokeStyle = "#555";
+  if(animate.progress > 0 && dots.length > 0) {
     if(animate.play && animate.progress === 1) centerLineDots = [{x:dots[0].x, y:dots[0].y}];
-    ctx.fillStyle = "#2228";
-    ctx.strokeStyle = "#555";
     let subDots = new Array();
     for(let i = 0; i < dots.length - 1; i++) {
       if(i === 0) subDots = dots;
       let nowDots = new Array();
-      // console.log(subDots);
       subDots.forEach((l, idx) => {
         if(idx < subDots.length - 1) {
           let dot = subDots[idx + 1];
@@ -153,28 +154,29 @@ function eventListener() {
     })
   })
   document.addEventListener("keydown", e => {
-    if(e.key === " ") {
+    let key = e.key.toLowerCase();
+    if(key === " ") {
       if(animate.play) animate.play = false;
       else animate.play = true;
     }
     if(e.keyCode < 90) {
-      if(e.key === "1") {
+      if(key === "1") {
         if(vMainDots) vMainDots = false;
         else vMainDots = true;
       }
-      if(e.key === "2") {
+      if(key === "2") {
         if(vMainLine) vMainLine = false;
         else vMainLine = true;
       }
-      if(e.key === "3") {
+      if(key === "3") {
         if(vSubDots) vSubDots = false;
         else vSubDots = true;
       }
-      if(e.key === "4") {
+      if(key === "4") {
         if(vSubLine) vSubLine = false;
         else vSubLine = true;
       }
-      if(e.key === "5") {
+      if(key === "5") {
         if(centerLine) centerLine = false;
         else centerLine = true;
       }
@@ -182,9 +184,65 @@ function eventListener() {
     if(96 < e.keyCode && e.keyCode < 106) {
       animate.time = Number(e.key) * 50;
     }
-    if(e.key.toLowerCase() === "r") {
+    if(key === "h") {
+      if(ctrl && shift) {
+        dots = new Array();
+        centerLineDots = new Array();
+        let x = canvas.width / 2;
+        let y = canvas.height / 2;
+        dots.push({x: x, y: y + 250, select: false});
+        dots.push({x: x - 570, y: y - 50, select: false});
+        dots.push({x: x - 250, y: y - 500, select: false});
+        dots.push({x: x + 150, y: y - 200, select: false});
+        dots.push({x: x + 100, y: y - 50, select: false});
+        dots.push({x: x, y: y - 20, select: false});
+        dots.push({x: x - 100, y: y - 50, select: false});
+        dots.push({x: x - 150, y: y - 200, select: false});
+        dots.push({x: x + 250, y: y - 500, select: false});
+        dots.push({x: x + 570, y: y - 50, select: false});
+        dots.push({x: x, y: y + 250, select: false});
+        vMainDots = false;
+        vMainLine = false;
+        vSubDots = false;
+        vSubLine = false;
+        centerLine = true;
+      }
+    }
+    if(key === "c") {
+      dots = new Array();
+      centerLineDots = new Array();
+      let deg = 0;
+      for(let i = 0; i < 37; i++) {
+        dots.push({x: canvas.width / 2 + (Math.cos(deg * Math.PI / 180) * 300), y: canvas.height / 2 + (Math.sin(deg * Math.PI / 180) * 300), select: false});
+        if(!shift && !ctrl) deg += 10;
+        if(shift && !ctrl) deg += 20;
+        if(!shift && ctrl) deg += 30;
+        if(shift && ctrl) deg += 40;
+      }
+    }
+    if(key === "r") {
       if(animate.replay) animate.replay = false;
       else animate.replay = true;
+    }
+    if(key === "control") {
+      e.preventDefault();
+      ctrl = true;
+    }
+    if(key === "shift") {
+      shift = true;
+    }
+    if(key === "enter") {
+      dots = new Array();
+      centerLineDots = new Array();
+    }
+  })
+  document.addEventListener("keyup", e=> {
+    let key = e.key.toLowerCase();
+    if(key === "control") {
+      ctrl = false;
+    }
+    if(key === "shift") {
+      shift = false;
     }
   })
   button.addEventListener("click", e => {
