@@ -2,7 +2,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const button = document.getElementById("button");
 let dots = new Array();
-let mouse = {x: 0, y: 0, move: false};
+let mouse = {x: 0, y: 0, move: false, down: false};
 let animate = {play: false, progress: 0, time: 200, replay: false};
 let centerLine = false;
 let centerLineDots = new Array();
@@ -12,6 +12,7 @@ let vSubLine = true;
 let vSubDots = true;
 let ctrl = false;
 let shift = false;
+let shape = {shape: "", fill: false, alpha: 0};
 
 function init() {
   canvas.width = window.innerWidth;
@@ -24,8 +25,13 @@ function init() {
 
 function drawing() {
   if(animate.play) animate.progress++;
+  if(shape.shape === "") {
+    shape.fill = false;
+    shape.alpha = 0;
+  }
   if(animate.progress >= animate.time) {
     if(!animate.replay) animate.play = false;
+    if(shape.shape === "heart") shape.fill = true;
     animate.progress = 0;
     centerLineDots.push({x: dots[dots.length - 1].x, y: dots[dots.length - 1].y});
   }
@@ -105,6 +111,11 @@ function drawing() {
       }
     })
     ctx.stroke();
+    if(shape.fill) {
+      ctx.fillStyle = `rgba(255, 50, 50, ${shape.alpha})`;
+      ctx.fill();
+      if(shape.alpha < 1) shape.alpha += 0.01;
+    }
   }
   ctx.beginPath();
   mouse.move = false;
@@ -116,6 +127,7 @@ function eventListener() {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     let dotClick = false;
+    shape.shape = "";
     dots.reverse();
     dots.forEach((i, idx) => {
       if(dotClick === false){
@@ -142,13 +154,19 @@ function eventListener() {
         }
       }
     })
+    if(!dotClick && ctrl) mouse.down = true;
   })
   document.addEventListener("mousemove", e => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     mouse.move = true;
+    if(mouse.down) {
+      shape.shape = "";
+      dots.push({x: mouse.x, y: mouse.y, select: false});
+    }
   })
   document.addEventListener("mouseup", e => {
+    mouse.down = false;
     dots.forEach(i => {
       i.select = false;
     })
@@ -159,7 +177,8 @@ function eventListener() {
       if(animate.play) animate.play = false;
       else animate.play = true;
     }
-    if(e.keyCode < 90) {
+    if(e.keyCode > 48 && e.keyCode < 54) {
+      shape.shape = "";
       if(key === "1") {
         if(vMainDots) vMainDots = false;
         else vMainDots = true;
@@ -206,9 +225,11 @@ function eventListener() {
         vSubDots = false;
         vSubLine = false;
         centerLine = true;
+        shape.shape = "heart";
       }
     }
     if(key === "c") {
+      shape.shape = "";
       dots = new Array();
       centerLineDots = new Array();
       let deg = 0;
